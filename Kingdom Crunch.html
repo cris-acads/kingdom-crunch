@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingdom Crunch — Order & Inventory</title>
+
+<link rel="stylesheet" href="Kingdom Crunch Design.css">
+</head>
+
+<body>
+
+<!-- =========================
+     HEADER
+========================== -->
+
+<!-- WEBSITE SECTION: Top navigation / Customer, Staff, and Cart controls -->
+<header>
+    <div class="nav">
+
+        <div class="brand">
+            <img class="brand-logo" src="images/kingdom-crunch-logo.png" alt="Kingdom Crunch logo">
+
+            <div class="brand-text">
+                <h1>KINGDOM CRUNCH</h1>
+                <p>A kingdom of flavor. A crunch of fun.</p>
+            </div>
+        </div>
+
+        <div class="nav-actions">
+            <button class="nav-btn active" id="customerBtn" onclick="switchView('customer')">
+                Customer
+            </button>
+
+            <button class="nav-btn" id="staffBtn" onclick="switchView('staff')">
+                Staff
+            </button>
+
+            <button class="nav-btn cart-btn" onclick="openCart()">
+                🛒 Cart
+                <span class="cart-count" id="cartCount">0</span>
+            </button>
+        </div>
+
+    </div>
+</header>
+
+<!-- =========================
+     CUSTOMER VIEW
+========================== -->
+
+<!-- WEBSITE SECTION: Customer storefront / ordering page -->
+<section id="customerView">
+
+    <!-- WEBSITE COMPONENT: Featured drinks carousel; staff controls the slides from the Staff tab. -->
+    <div class="hero">
+        <div class="hero-card featured-carousel" id="featuredCarousel" aria-label="Featured drinks carousel">
+            <button class="carousel-arrow carousel-prev" type="button" aria-label="Previous featured drink" onclick="moveFeatured(-1)">‹</button>
+            <div class="hero-content" id="featuredContent">
+                <div class="hero-badge">KINGDOM CRUNCH • ORDER ONLINE</div>
+                <h2>Your favorite drinks,<br><span>ready when you are.</span></h2>
+                <p>Browse the Kingdom Crunch menu, check current availability, place your order, and pick it up when you're ready.</p>
+                <div class="hero-actions">
+                    <button class="primary-btn" onclick="scrollToMenu()">Browse Menu</button>
+                    <button class="secondary-btn" onclick="openCart()">View My Order</button>
+                </div>
+            </div>
+            <div class="featured-image-wrap" id="featuredImageWrap" aria-hidden="true"></div>
+            <button class="carousel-arrow carousel-next" type="button" aria-label="Next featured drink" onclick="moveFeatured(1)">›</button>
+            <div class="carousel-dots" id="featuredDots" aria-label="Featured slide controls"></div>
+        </div>
+    </div>
+
+    <!-- WEBSITE COMPONENT: NFC access / tap-to-order entry point -->
+    <div class="nfc-banner">
+
+        <div class="nfc-card">
+
+            <div class="nfc-info">
+
+                <div class="nfc-icon">
+                    📡
+                </div>
+
+                <div>
+                    <h3>Tap to access Kingdom Crunch</h3>
+
+                    <p>
+                        In the physical store, customers can tap the NFC tag
+                        to instantly open this ordering website.
+                    </p>
+                </div>
+
+            </div>
+            <button class="nfc-btn" onclick="simulateNFC()">
+                Tap NFC
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- WEBSITE SECTION: Product menu, search, categories, availability, and ordering -->
+    <main class="content" id="menu">
+
+        <div class="section-header">
+
+            <div>
+                <h2>Our Drinks</h2>
+                <p>Check availability before ordering.</p>
+            </div>
+
+            <div class="search-box">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search drinks..."
+                    oninput="renderProducts()"
+                >
+            </div>
+
+        </div>
+
+        <div class="category-row" id="categoryRow"></div>
+
+        <div class="product-grid" id="productGrid"></div>
+
+    </main>
+
+</section>
+
+<!-- =========================
+     STAFF VIEW
+========================== -->
+
+<!-- WEBSITE SECTION: Staff inventory management dashboard -->
+<section id="staffView">
+
+    <main class="content">
+
+        <div class="staff-header">
+            <h2>Inventory Management</h2>
+
+            <p>
+                Staff dashboard for monitoring product availability and stock levels.
+            </p>
+        </div>
+
+        <!-- STAFF SUBTABS: switch between inventory tools and incoming customer orders. -->
+        <div class="staff-subtabs">
+            <button type="button" class="staff-subtab active" id="inventoryTabBtn" onclick="switchStaffTab('inventory')">Inventory</button>
+            <button type="button" class="staff-subtab" id="ordersTabBtn" onclick="switchStaffTab('orders')">Customer Orders <span id="pendingOrderCount" class="order-count">0</span></button>
+        </div>
+
+        <div class="stats staff-inventory-section">
+
+            <div class="stat-card">
+                <small>Total Products</small>
+                <strong id="totalProducts">0</strong>
+            </div>
+
+            <div class="stat-card">
+                <small>Available</small>
+                <strong id="availableProducts">0</strong>
+            </div>
+
+            <div class="stat-card">
+                <small>Low Stock</small>
+                <strong id="lowStockProducts">0</strong>
+            </div>
+
+            <div class="stat-card">
+                <small>Out of Stock</small>
+                <strong id="outStockProducts">0</strong>
+            </div>
+
+        </div>
+
+        <!-- STAFF FEATURE: Add/edit products without editing source code. -->
+        <section class="staff-panel staff-inventory-section" id="productEditorPanel">
+            <div class="panel-heading">
+                <div><h3 id="productFormTitle">Add a Drink</h3><p>Enter drink details, separate hot/cold prices, and shared stock.</p></div>
+                <button class="secondary-staff-btn" type="button" onclick="resetProductForm()">Clear Form</button>
+            </div>
+            <form id="productForm" class="product-form" onsubmit="saveProductForm(event)">
+                <input type="hidden" id="editProductId">
+                <div class="form-group"><label for="productName">Drink name *</label><input id="productName" required maxlength="80" placeholder="e.g., Brown Sugar Latte"></div>
+                <div class="form-group"><label for="productCategory">Category *</label><input id="productCategory" required list="categoryOptions" maxlength="50" placeholder="e.g., Coffee"><datalist id="categoryOptions"><option>Coffee</option><option>Matcha</option><option>Specialty</option><option>Milk & Fruit</option><option>Classic</option></datalist></div>
+                <div class="form-group"><label for="hotPrice">Hot price (₱) *</label><input id="hotPrice" type="number" min="0" step="0.01" required></div>
+                <div class="form-group"><label for="coldPrice">Cold price (₱) *</label><input id="coldPrice" type="number" min="0" step="0.01" required></div>
+                <div class="form-group"><label for="productStock">Shared stock quantity *</label><input id="productStock" type="number" min="0" step="1" required value="0"></div>
+                <div class="form-group"><label for="productAvailability">Availability</label><select id="productAvailability"><option value="true">Available for ordering</option><option value="false">Mark unavailable</option></select></div>
+                <div class="form-group form-wide"><label for="productDescription">Description</label><textarea id="productDescription" rows="3" maxlength="300" placeholder="Short description shown to customers"></textarea></div>
+                <div class="form-group form-wide"><label for="productImage">Drink image (optional)</label><input id="productImage" type="file" accept="image/*"><small>Images are resized for this browser-based demo. Leave empty to keep the current image when editing.</small><div id="imagePreview" class="image-preview"></div></div>
+                <div class="form-group form-wide form-check"><label><input id="productFeatured" type="checkbox"> Include this drink in the homepage featured carousel</label></div>
+                <div class="form-actions form-wide"><button class="checkout-btn" type="submit" id="saveProductButton">Save Drink</button><button class="secondary-staff-btn" type="button" onclick="resetProductForm()">Cancel edit</button></div>
+            </form>
+        </section>
+
+        <!-- STAFF FEATURE: Feature selection and ordering for homepage carousel. -->
+        <section class="staff-panel">
+            <div class="panel-heading"><div><h3>Homepage Featured Drinks</h3><p>Choose the slides customers see, and change their order.</p></div></div>
+            <div id="featuredManager" class="featured-manager"></div>
+        </section>
+
+        <div class="inventory-table-wrap staff-inventory-section">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Hot / Cold</th>
+                        <th>Shared Stock</th>
+                        <th>Status</th>
+                        <th>Availability</th>
+                        <th>Manage</th>
+                    </tr>
+                </thead>
+
+                <tbody id="inventoryBody"></tbody>
+
+            </table>
+
+        </div>
+
+        <!-- STAFF FEATURE: Customer orders and pickup tracking. Orders persist in this browser. -->
+        <section class="staff-panel" id="staffOrdersPanel" style="display:none;">
+            <div class="panel-heading">
+                <div><h3>Customer Orders</h3><p>Review scheduled pickups, confirm preparation, and mark orders completed after pickup.</p></div>
+                <button type="button" class="secondary-staff-btn" onclick="renderStaffOrders()">Refresh</button>
+            </div>
+            <div class="order-filter-row">
+                <label for="orderStatusFilter">Show:</label>
+                <select id="orderStatusFilter" onchange="renderStaffOrders()">
+                    <option value="active">Active orders</option>
+                    <option value="completed">Completed orders</option>
+                    <option value="all">All orders</option>
+                </select>
+            </div>
+            <div id="staffOrdersList" class="staff-orders-list"></div>
+        </section>
+
+    </main>
+
+</section>
+
+<!-- WEBSITE COMPONENT: Customer shopping cart modal -->
+<!-- =========================
+     CART MODAL
+========================== -->
+
+<div class="overlay" id="cartOverlay">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h3>Your Order</h3>
+
+            <button class="close-btn" onclick="closeCart()">
+                ×
+            </button>
+
+        </div>
+
+        <div id="cartItems"></div>
+
+        <div id="cartFooter"></div>
+
+    </div>
+
+</div>
+
+<!-- WEBSITE COMPONENT: Checkout and order confirmation modal -->
+<!-- =========================
+     CHECKOUT MODAL
+========================== -->
+
+<div class="overlay" id="checkoutOverlay">
+
+    <div class="modal" id="checkoutModal">
+
+        <div class="modal-header">
+
+            <h3>Checkout</h3>
+
+            <button class="close-btn" onclick="closeCheckout()">
+                ×
+            </button>
+
+        </div>
+
+        <form onsubmit="placeOrder(event)">
+
+            <div class="form-group">
+                <label>Customer Name</label>
+
+                <input
+                    type="text"
+                    id="customerName"
+                    required
+                    placeholder="Enter your name"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Pickup Time</label>
+
+                <select id="pickupTime" required>
+
+                    <option value="">
+                        Select pickup time
+                    </option>
+
+                    <option>10:00 AM</option>
+                    <option>10:15 AM</option>
+                    <option>10:30 AM</option>
+                    <option>10:45 AM</option>
+                    <option>11:00 AM</option>
+                    <option>11:15 AM</option>
+                    <option>11:30 AM</option>
+                    <option>11:45 AM</option>
+                    <option>12:00 PM</option>
+                    <option>12:15 PM</option>
+                    <option>12:30 PM</option>
+                    <option>12:45 PM</option>
+                    <option>1:00 PM</option>
+                    <option>1:15 PM</option>
+                    <option>1:30 PM</option>
+                    <option>1:45 PM</option>
+                    <option>2:00 PM</option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Payment Method</label>
+
+                <select id="paymentMethod">
+
+                    <option>Pay at Store</option>
+                    <option>GCash</option>
+                    <option>Cash</option>
+
+                </select>
+
+            </div>
+
+            <button class="checkout-btn" type="submit">
+                Confirm Order
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- =========================
+     JAVASCRIPT
+========================== -->
+
+<!-- WEBSITE LOGIC: All interactive behavior is in script.js -->
+<script src="Kingdom Crunch.js"></script>
+
+</body>
+</html>
